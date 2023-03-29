@@ -1,3 +1,5 @@
+### Create an Anthos Team Cluster and Namespace
+
 Link: https://cloud.google.com/anthos/fleet-management/docs/team-management
 
 0. Create cluster in GUI with default settings
@@ -74,3 +76,40 @@ Link: https://cloud.google.com/anthos/fleet-management/docs/team-management
       ```
       kubectl apply -f hello-world.yaml -n test-1
       ```
+
+### Create Anthos Team Namespace Across Projects
+
+Link: https://cloud.google.com/anthos/fleet-management/docs/before-you-begin/gke#gke-cross-project
+
+0. Create a new project
+
+0. In the new project, create cluster in GUI with default settings and enable Workload Identity (different name from first cluster)
+
+0. Verify Workload Identity is installed `gcloud container clusters describe cluster-3 --format="value(workloadIdentityConfig.workloadPool)" --zone=us-central1-c`
+
+0. In the fleet hub project, ensure GKE Hub service account has been provisioned in host project `gcloud projects get-iam-policy HUB_PROJECT_NAME | grep gcp-sa-gkehub`
+
+0. In the new project, give the GKE Hub service account the proper permissions to connect the cluster to the hub fleet
+    ```
+    gcloud projects add-iam-policy-binding NEW_PROJECT_NAME \
+        --member=serviceAccount:SVC_ACCOUNT_NAME@gcp-sa-gkehub.iam.gserviceaccount.com \
+        --role=roles/gkehub.serviceAgent
+    ```
+
+0. Register the cluster to the hub project
+    ```
+    gcloud container fleet memberships register NEW_CLUSTER_NAME \
+        --gke-uri=//container.googleapis.com/projects/NEW_PROJECT_NAME/locations/ZONE/clusters/NEW_CLUSTER_NAME \
+        --project=HUB_PROJECT_NAME
+    ```
+0. Add the new cluster to scope-1 to provision the test-1 namespace automatically
+    ```
+    gcloud alpha container fleet memberships bindings create cluster-2-scope-1 \
+         --membership cluster-2 \
+         --scope  scope-1 \
+         --location global
+    ```
+0. Run the following kubectl command and the namespace should pop up in a few moments
+    ```
+    kubectl get namespace --watch
+    ```
