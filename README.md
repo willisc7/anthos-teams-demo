@@ -113,3 +113,25 @@ Link: https://cloud.google.com/anthos/fleet-management/docs/before-you-begin/gke
     ```
     kubectl get namespace --watch
     ```
+
+### Create Anthos GKE Cluster in AWS
+Link: https://cloud.google.com/anthos/clusters/docs/multi-cloud/aws/how-to/create-cluster-with-terraform#prerequisites
+
+0. Follow the terraform steps (should be relatively straightforward)
+    * If IAM policies prevent you from creating roles, then manually create a role in the GUI called AWSServiceRoleForAutoScaling that has the following:
+      * Trusted Entity Type = AWS Service
+      * Use cases for other AWS services = EC2 Auto Scaling
+      * Select the EC2 Auto Scaling radio button
+
+0. gcloud container aws clusters get-credentials AWS_CLUSTER_NAME --location LOCATION
+  * LOCATION = value of gcp_location from terraform.tfvars
+
+0. gcloud alpha container fleet memberships bindings create aws-cluster-qc-anthos-zx-scope-1 \
+         --membership aws-cluster-qc-anthos-zx \
+         --scope  scope-1 \
+         --location global
+         
+0. Run the following kubectl command and the namespace should pop up in a few moments
+    ```
+    kubectl get namespace --watch
+    ```
